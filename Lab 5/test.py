@@ -1,5 +1,17 @@
 import numpy as np
+import time
+import pandas as pd
+from scipy.optimize import curve_fit
+from scipy.stats.distributions import t
+from scipy import stats
+import matplotlib.pyplot as plt
+import openpyxl
 
-x = [1, 2, 3, 4, 5, 6, 7, 8, 9]
-print(x[1:])
-print(x[:-1])
+# 3. Import and format data
+data = pd.read_excel('KineticDataFromChE101_vS22.xlsx', 'Sheet1')
+#runtime = data[0]
+#Concentration_A = data[1]
+
+print(data)
+
+
