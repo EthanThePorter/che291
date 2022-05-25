@@ -1,5 +1,5 @@
-import numpy as np
 import time
+import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
 from scipy.stats.distributions import t
@@ -76,7 +76,7 @@ axes[1].plot(td[2:-3], Rate_CDF)
 axes[1].legend('Central')
 axes[2].plot(td[2:-3], Rate_BDF)
 axes[2].legend('Backward')
-#plt.show()
+plt.show()
 
 
 
@@ -143,24 +143,22 @@ tv = stats.t.ppf(1.0-alpha/2.0, nd-nb)  # student T multiplier
 CI = tv*se
 kCI = np.exp(CI[0])
 
-print('\nConfidence Interval Values')
+print('\nTask 2: Confidence Interval Values')
 print(kCI, CI[1], CI[2])
+
 
 
 # TASK 3
 # 1. Define Kinetics Equation
 def KineticEquation(tre, a0, a1, a2):
-    """
-    :param m: Array of beta coefficients from linear regression
-    :return: Returns the rate as a Numpy array
-    """
 
     R = a0 * CAe**a1 * CBe**a2
     return R
 
+
 # 2. Define an initial guess vector m0 for parameters and an upper bound/lower bound
-bnds=(0.001,15)
-A0=[6,1,1]
+bnds = (0.001, 15)
+A0 = [6, 1, 1]
 
 
 # 3. Use scipy’s curve_fit to perform nonlinear regression
@@ -170,10 +168,26 @@ A, Acov = curve_fit(KineticEquation, tre, Re, A0, bounds=bnds)
 # 4. Calculate SSE, R2, and 95% CIs values using the same method as Task 2
 m = [k, beta[1], beta[2]]
 rpred = KineticEquation(tre, A[0], A[1], A[2])
-rmean = sum(Re)/len(Re)
+rmean = np.mean(Re)
 SSE = np.sum((Re - rpred)**2)
 SST = np.sum((rpred - rmean)**2)
-R2= 1 - SSE / SST
+R2 = 1 - SSE / SST
 
-print('\nR-Squared Value for Non-Linear Regression')
+se = np.sqrt(np.diag(Acov))  # standard error
+alpha = 0.05  # 100*(1 - alpha) confidence level
+tv = stats.t.ppf(1.0-alpha/2.0, nd-nb)  # student T multiplier
+CI = tv*se
+
+
+print('\nTask 3: Coefficients')
+print(A)
+
+print('\nTask 3: R-Squared Value for Non-Linear Regression')
 print(R2)
+
+print('\nTask 3: Confidence Interval Values')
+print(CI)
+
+
+
+

@@ -1,17 +1,16 @@
 import numpy as np
-import time
 import pandas as pd
-from scipy.optimize import curve_fit
-from scipy.stats.distributions import t
-from scipy import stats
-import matplotlib.pyplot as plt
 import openpyxl
 
-# 3. Import and format data
-data = pd.read_excel('KineticDataFromChE101_vS22.xlsx', 'Sheet1')
-#runtime = data[0]
-#Concentration_A = data[1]
+# Import and format data
+df = pd.read_excel('KineticData2.xlsx', 'Sheet1').to_numpy()
+t = df[:, 0]
+C_A = df[:, 1]
 
-print(data)
+# Initialize known parameters
+C_A_initial = C_A[0]
+C_B_initial = 0.053
+h = 0.25  # delta time in minutes
+
 
 
