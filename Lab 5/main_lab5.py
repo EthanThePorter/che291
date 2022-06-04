@@ -76,7 +76,7 @@ axes[1].plot(td[2:-3], Rate_CDF)
 axes[1].legend('Central')
 axes[2].plot(td[2:-3], Rate_BDF)
 axes[2].legend('Backward')
-plt.show()
+#plt.show()
 
 
 
@@ -145,7 +145,6 @@ kCI = np.exp(CI[0])
 
 print('\nTask 2: Confidence Interval Values')
 print(kCI, CI[1], CI[2])
-
 
 
 # TASK 3
