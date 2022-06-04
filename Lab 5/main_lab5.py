@@ -24,6 +24,9 @@ h = 0.25  # delta time in minutes
 n = len(tr)  # n = 141
 
 
+print(CAo)
+
+
 # 5. Calculate reaction rate using forward difference formula (EQN 6b) and ‘for’ loop
 trf2 = np.zeros(n - 4)
 CAf2 = np.zeros(n - 4)
