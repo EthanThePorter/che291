@@ -1,16 +1,34 @@
+import time
 import numpy as np
 import pandas as pd
+from scipy.optimize import curve_fit
+from scipy.integrate import odeint
+from scipy import stats
+import matplotlib.pyplot as plt
 import openpyxl
 
-# Import and format data
-df = pd.read_excel('KineticData2.xlsx', 'Sheet1').to_numpy()
-t = df[:, 0]
-C_A = df[:, 1]
 
-# Initialize known parameters
-C_A_initial = C_A[0]
-C_B_initial = 0.053
-h = 0.25  # delta time in minutes
+# # DE
+# def f(y, t):
+#     k = -2
+#     dydt = -k * y
+#     return dydt
+#
+#
+# # IC
+# y0 = 1
+#
+# # Range to calculate over
+# t = np.linspace(0, 2)
+#
+# # Find DE solution
+# y = odeint(f, y0, t)
+#
+#
+# plt.plot(t, y)
+# plt.show()
 
+x = [1, 2, 3]
+y = [1, 2, 3]
 
-
+print(x + y)

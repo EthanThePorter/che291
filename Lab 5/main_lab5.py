@@ -2,6 +2,7 @@ import time
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
+from scipy.integrate import odeint
 from scipy.stats.distributions import t
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -13,15 +14,17 @@ data = pd.read_excel('KineticDataFromChE101_vS22.xlsx', 'Sheet1')
 td = data.iloc[1:142, 0]
 CAd = data.iloc[1:142, 1]
 
-tr = np.asarray(td, dtype=float)
+runtime = np.asarray(td, dtype=float)
 CA = np.asarray(CAd, dtype=float)
+
 
 
 # 4. Initialize Known Parameters
 CAo = CA[0]
 CBo = 0.053
+CB = CA + CBo - CAo
 h = 0.25  # delta time in minutes
-n = len(tr)  # n = 141
+n = len(runtime)  # n = 141
 
 
 print(CAo)
@@ -35,19 +38,18 @@ Rf2 = np.zeros(n - 4)
 
 start1 = time.perf_counter()
 for i in range(n - 4):
-    trf2[i] = tr[i + 2]
+    trf2[i] = runtime[i + 2]
     CAf2[i] = CA[i + 2]
     CBf2[i] = CBo - (CAo - CAf2[i])
     Rf2[i] = -(-3 * CA[i + 2] + 4 * CA[i + 3] - CA[i + 4]) / 2 / h
 
 tf2 = (time.perf_counter() - start1) * 1000
-print(tf2)
 
 
 # 6. Calculate reaction rate using forward difference formula (EQN 6b) and array operations
 start1 = time.perf_counter()
 
-trf1 = tr[2:-3]
+trf1 = runtime[2:-3]
 CAf1 = CA[2:-3]
 
 
@@ -56,15 +58,14 @@ CBf1 = CA[2:-3] + CBo - CAo
 Rf1 = -(-3 * CA[2:-3] + 4 * CA[3:-2] - CA[4:-1]) / 2 / h
 
 tf1 = (time.perf_counter() - start1) * 1000
-print(tf1)
 
 
 # 7. Calculate reaction rate using central difference formula (EQN 8)
-trc = tr[2:-3]
+trc = runtime[2:-3]
 CAc = CA[2:-3]
-CBc=CBo-(CAo-CAc)
+CBc = CBo - (CAo - CAc)
 
-Rate_CDF = (CA[1:-4] - CA[3:-2]) / (2 * h)
+R_CDF = (CA[1:-4] - CA[3:-2]) / (2 * h)
 
 
 # 8. Calculate reaction rate using backward difference (EQN 7b)
@@ -75,12 +76,11 @@ Rate_BDF = (-3 * CA[2:-3] + 4 * CA[1:-4] - CA[0:-5]) / 2 / h
 fig, axes = plt.subplots(3)
 axes[0].plot(td[2:-3], Rf1)
 axes[0].legend('Forward')
-axes[1].plot(td[2:-3], Rate_CDF)
+axes[1].plot(td[2:-3], R_CDF)
 axes[1].legend('Central')
 axes[2].plot(td[2:-3], Rate_BDF)
 axes[2].legend('Backward')
 #plt.show()
-
 
 
 # Task 2
@@ -88,7 +88,7 @@ axes[2].legend('Backward')
 trr = trc
 CAr = CAc
 CBr = CBc
-Rr = Rate_CDF
+Rr = R_CDF
 
 j = 0
 while j <= (len(Rr) - 1):
@@ -138,7 +138,7 @@ print(R2)
 
 
 # 5. Calculate 95% confidence intervals for the fitted model
-sigma2 = np.sum((y - np.dot(M, beta))**2) /(nd - nb)  #sigma square
+sigma2 = np.sum((y - np.dot(M, beta))**2) / (nd - nb)  # sigma square
 var=sigma2 * np.linalg.inv(np.dot(M.T, M))  # covariance matrix
 se = np.sqrt(np.diag(var))  # standard error
 alpha = 0.05  # 100*(1 - alpha) confidence level
@@ -175,6 +175,8 @@ SSE = np.sum((Re - rpred)**2)
 SST = np.sum((rpred - rmean)**2)
 R2 = 1 - SSE / SST
 
+print(f'R_mean:{rmean}')
+
 se = np.sqrt(np.diag(Acov))  # standard error
 alpha = 0.05  # 100*(1 - alpha) confidence level
 tv = stats.t.ppf(1.0-alpha/2.0, nd-nb)  # student T multiplier
@@ -191,5 +193,50 @@ print('\nTask 3: Confidence Interval Values')
 print(CI)
 
 
+# Task 6
+def KineticEquations(C, t, m):
+
+    # Define ODEs
+    dCAdt = -m[0] * C[0]**m[1] * C[1]**m[2]
+    dCBdt = -m[0] * C[0]**m[1] * C[1]**m[2]
+
+    return dCAdt, dCBdt
 
 
+def PredictedCA(t, a0, a1, a2):
+
+    # Converts 3 parameters into a list for inserting into kinetic equations function
+    m = [a0, a1, a2]
+
+    # Initial conditions
+    y0 = CAo, CBo
+
+    # Gets ODE solution
+    sol = odeint(KineticEquations, y0, t, args=(m,))
+
+    # Returns transpose of the solution's first column - This corresponds to the predicted CA data
+    return np.transpose(sol)[0]
+
+
+# Bounds and initial guesses for curvefitting function
+bounds = (0.001, 10)
+initial_parameter_guess = [6, 1, 1]
+
+# Find parameters for Kinetic Equations
+parameters, covariance = curve_fit(PredictedCA, runtime, CA, initial_parameter_guess, bounds=bounds)
+print(f'\n\nTask 6: Parameters\n{parameters}\n')
+
+# Get R squared for regression by comparing Integrated Numerical Method to Central difference formula
+R_predicted = KineticEquations([CA, CB], runtime, parameters)[0][2:-3]
+R_mean = np.mean(-R_CDF)
+SSE = np.sum((-R_CDF - R_predicted) ** 2)
+SST = np.sum((R_predicted - R_mean) ** 2)
+R2 = 1 - SSE / SST
+print(f'Task 6: R-Squared\n{R2}\n')
+
+# Get 95% CI for Integrated Numerical Method
+se = np.sqrt(np.diag(covariance))
+alpha = 0.05
+tv = stats.t.ppf(1.0-alpha/2.0, nd-nb)
+CI = tv*se
+print(f'Task 6: Confidence Interval Values\n{CI}\n')
