@@ -53,12 +53,6 @@ initial_parameter_guess = [6, 1, 1]
 parameters, covariance = curve_fit(PredictedCA, runtime, CA, initial_parameter_guess, bounds=bounds)
 print(f'Parameters:\n{parameters}\n')
 
-# Get statistics for regression by comparing Integrated Numerical Method to Central difference formula
-R_predicted = KineticEquations([CA, CB], runtime, parameters)[0]
-R_mean = np.mean(R_CDF)
-#SSE = np.sum((Re - rpred)**2)
-
-print(R_mean)
 
 
 
