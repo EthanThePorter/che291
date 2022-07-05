@@ -123,6 +123,7 @@ print(beta)
 
 
 k = np.exp(beta[0])
+beta[0] = k
 print('\nBeta Array Value [k a B]')
 print(k, beta[1], beta[2])
 

@@ -44,6 +44,9 @@ class Lab5:
         self.nd = None
         self.nb = None
 
+        # Task 6 Variables
+        self.parameters = None
+
         # Get Data
         data = pd.read_excel('KineticDataFromChE101_vS22.xlsx', 'Sheet1')
         self.td = data.iloc[1:142, 0]
@@ -67,7 +70,7 @@ class Lab5:
         self.Rf2 = np.zeros(self.n - 4)
 
         # Start Timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Calculate reaction rate using forward difference formula (EQN 6b) and array operations
         for i in range(self.n - 4):
             self.trf2[i] = self.runtime[i + 2]
@@ -75,7 +78,8 @@ class Lab5:
             self.CBf2[i] = self.CBo - (self.CAo - self.CAf2[i])
             self.Rf2[i] = -(-3 * self.CA[i + 2] + 4 * self.CA[i + 3] - self.CA[i + 4]) / 2 / self.h
         # End timer and append value to main runtimes dict
-        self.runtimes['1-FDF for-loop'] = time.time() - timer
+        self.runtimes['1-FDF for-loop'] = time.perf_counter() - timer
+
 
     def task1_FDF(self):
         # Initialize Variables
@@ -84,11 +88,11 @@ class Lab5:
         self.CBf1 = self.CA[2:-3] + self.CBo - self.CAo
 
         # Start Timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Calculate rate using Forward Difference Formula
         self.Rf1 = -(-3 * self.CA[2:-3] + 4 * self.CA[3:-2] - self.CA[4:-1]) / 2 / self.h
         # End timer and append value to main runtimes dict
-        self.runtimes['1-FDF'] = time.time() - timer
+        self.runtimes['1-FDF'] = time.perf_counter() - timer
 
 
     def task_1_CDF(self):
@@ -98,20 +102,21 @@ class Lab5:
         self.CBc = self.CBo - (self.CAo - self.CAc)
 
         # Start Timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Calculate the rate using Central Difference Formula
         self.R_CDF = (self.CA[1:-4] - self.CA[3:-2]) / (2 * self.h)
         # End timer and append value to main runtimes dict
-        self.runtimes['1-CDF'] = time.time() - timer
+        self.runtimes['1-CDF'] = time.perf_counter() - timer
 
 
     def task_1_BDF(self):
         # Start Timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Calculate the rate using Backwards Difference Formula
         self.Rate_BDF = (-3 * self.CA[2:-3] + 4 * self.CA[1:-4] - self.CA[0:-5]) / 2 / self.h
         # End timer and append value to main runtimes dict
-        self.runtimes['1-BDF'] = time.time() - timer
+        self.runtimes['1-BDF'] = time.perf_counter() - timer
+
 
     def task_1_plot_results(self):
         fig, axes = plt.subplots(3)
@@ -155,11 +160,11 @@ class Lab5:
         M[:, 2] = np.log(self.CBe)
 
         # Start timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Determine kinetic parameters with linear regression using Numpy’s linalg.lstsq
         beta, res, rank, S = np.linalg.lstsq(M, y, rcond=None)
         # End timer and append value to main runtimes dict
-        self.runtimes['2-MLR'] = time.time() - timer
+        self.runtimes['2-MLR'] = time.perf_counter() - timer
 
         # Get coefficient array and output
         k = np.exp(beta[0])
@@ -170,7 +175,7 @@ class Lab5:
         SSE = np.sum((y - ypred) ** 2)
         SST = np.sum((y - np.mean(y)) ** 2)
         R2 = 1 - SSE / SST
-        print(f'\nTask 2: R_Squared\n{R2}')
+        print(f'\nTask 2: R_Squared\n{R2}\n\nTask 2: Residuals\n{res}')
 
         # Calculate 95% confidence intervals for the fitted model
         sigma2 = np.sum((y - np.dot(M, beta)) ** 2) / (self.nd - self.nb)  # sigma square
@@ -194,11 +199,11 @@ class Lab5:
         A0 = [6, 1, 1]
 
         # Start timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Use scipy’s curve_fit to perform nonlinear regression
         A, Acov = curve_fit(self.KineticEquation, self.tre, self.Re, A0, bounds=bnds)
         # End timer and append value to main runtimes dict
-        self.runtimes['3-NLR'] = time.time() - timer
+        self.runtimes['3-NLR'] = time.perf_counter() - timer
         print(f'\n\nTask 3: Coefficients\n{A}')
 
 
@@ -226,14 +231,28 @@ class Lab5:
         x_value = np.array([trL, np.ones(121)]).T
 
         # Start timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Get Rate constant
-        func = np.linalg.lstsq(x_value, yL, rcond=None)
-        slope1 = func[0][0]
+        x, RSS, rank, S = np.linalg.lstsq(x_value, yL, rcond=None)
+        slope1 = x[0]
         k4 = (-slope1) / (self.CBo - self.CAo)  # getting the k value from the slope of linalg.lstsq
         # End timer and append value to main runtimes dict
-        self.runtimes['4-LS'] = time.time() - timer
-        print(f'\n\nTask 4: k\n{k4}')
+        self.runtimes['4-LS'] = time.perf_counter() - timer
+        print(f'\n\nTask 4: Coefficient\n{k4}')
+
+        # R-squared calculation
+        ratepred = k4 * self.CAe * self.CBe
+        ratemean = sum(self.Re) / len(self.Re)
+        SSE1 = np.sum((self.Re - ratepred)**2)
+        SST1 = np.sum((self.Re - ratemean)**2)
+        R2_1 = 1 - (SSE1 / SST1)
+        print(f'\nTask 4: R-Squared\n{R2_1}\n\nTask 4: Residuals\n{RSS}')
+
+        # Get 95% CI
+        alpha = 0.05  # 100(1 - alpha) confidence level
+        tm = stats.t.ppf(1.0 - alpha / 2.0, len(trL))  # student T
+        CI = (tm * RSS) * -(self.CBo - self.CAo)
+        print(f'\nTask 4: 95% Confidence Interval\n{CI}')
 
 
     def task_5(self):
@@ -242,13 +261,27 @@ class Lab5:
         yL = y[:-20]
 
         # Start Timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Calculate Rate
         slope, intercept, r_value, p_value, slope_SE = stats.linregress(trL, yL)
         # End timer and append value to main runtimes dict
-        self.runtimes['5-LR'] = time.time() - timer
+        self.runtimes['5-LR'] = time.perf_counter() - timer
         k5 = (-slope) / (self.CBo - self.CAo)
-        print(f'\n\nTask 5: k\n{k5}')
+        print(f'\n\nTask 5: Coefficient\n{k5}')
+
+        # R-squared calculation
+        ratepred = k5 * self.CAe * self.CBe
+        ratemean = sum(self.Re) / len(self.Re)
+        SSE1 = np.sum((self.Re - ratepred) ** 2)
+        SST1 = np.sum((ratepred - ratemean) ** 2)
+        R2_1 = 1 - (SSE1 / SST1)
+        print(f'\nTask 5: R-Squared\n{R2_1}')
+
+        # Get 95% CI
+        alpha = 0.05  # 100(1 - alpha) confidence level
+        tm = stats.t.ppf(1.0 - alpha / 2.0, len(trL))  # student T
+        CI4 = (tm*slope_SE) / -(self.CBo - self.CAo)
+        print(f'\nTask 5: 95% Confidence Interval\n{CI4}')
 
 
     @staticmethod
@@ -283,15 +316,15 @@ class Lab5:
         initial_parameter_guess = [6, 1, 1]
 
         # Start timer
-        timer = time.time()
+        timer = time.perf_counter()
         # Find parameters for Kinetic Equations
-        parameters, covariance = curve_fit(self.PredictedCA, self.runtime, self.CA, initial_parameter_guess, bounds=bounds)
+        self.parameters, covariance = curve_fit(self.PredictedCA, self.runtime, self.CA, initial_parameter_guess, bounds=bounds)
         # End timer and append value to main runtimes dict
-        self.runtimes['6-INM'] = time.time() - timer
-        print(f'\n\nTask 6: Parameters\n{parameters}\n')
+        self.runtimes['6-INM'] = time.perf_counter() - timer
+        print(f'\n\nTask 6: Parameters\n{self.parameters}\n')
 
         # Get R squared for regression by comparing Integrated Numerical Method to Central difference formula
-        R_predicted = self.KineticEquations([self.CA, self.CB], self.runtime, parameters)[0][2:-3]
+        R_predicted = self.KineticEquations([self.CA, self.CB], self.runtime, self.parameters)[0][2:-3]
         R_mean = np.mean(-self.R_CDF)
         SSE = np.sum((-self.R_CDF - R_predicted) ** 2)
         SST = np.sum((R_predicted - R_mean) ** 2)
@@ -306,18 +339,34 @@ class Lab5:
         print(f'Task 6: Confidence Interval Values\n{CI}\n\n')
 
 
+    def task_6_plot(self):
+
+        # Get Predicted CA values uses parameters from task 6
+        CA_predicted = self.PredictedCA(self.runtime, self.parameters[0], self.parameters[1], self.parameters[2])
+
+        # Plot Predicted CA and Experimental CA on same plot
+        plt.plot(self.runtime, CA_predicted, label='Predicted CA')
+        plt.plot(self.runtime, self.CA, label='Experimental CA', linestyle='dotted')
+        plt.title('Task 6 Results')
+        plt.xlabel('Time (s)')
+        plt.ylabel('Concentration A (M)')
+        plt.legend()
+        plt.show()
+
+
 # Initialize class and run all tasks
 main = Lab5()
 main.task1_FDF_forloop()
 main.task1_FDF()
 main.task_1_CDF()
 main.task_1_BDF()
-#main.task_1_plot_results()
+# main.task_1_plot_results()
 main.task_2()
 main.task_3()
 main.task_4()
 main.task_5()
 main.task_6()
+main.task_6_plot()
 
 
 # Get dict key for fastest method
@@ -325,15 +374,14 @@ fastest = min(main.runtimes, key=main.runtimes.get)
 
 # Convert runtimes into ms
 for i in main.runtimes:
-    main.runtimes[i] = round(main.runtimes[i] * 1000, 6)
+    main.runtimes[i] = round(main.runtimes[i] * 1000, 4)
 
 # Get minimum runtime value
 minimum = main.runtimes[fastest]
 
 percent_slower = {}
 for i in main.runtimes:
-
-    percent_slower[i] = round((main.runtimes[i] / minimum - 1) * 100, 6)
+    percent_slower[i] = round((main.runtimes[i] / minimum - 1) * 100, 4)
 
 print('\nMethod Runtime Comparisons:')
 for i in main.runtimes:
