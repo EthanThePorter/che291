@@ -23,45 +23,47 @@ Nn = len(Pop)
 n = len(z)
 
 
-
-def fugacity(mf,W):
-
+def fugacity(mf, W):
     # Critical values:
-    CPT=np.array([[48.2,  305.5,  0.099],              # Ethane
-                  [42.0,  370.0,  0.153],              # Propane
-                  [37.5,  425.2,  0.199],              # Butane
-                  [33.75, 469.6,  0.254],              # Pentane
-                  [30.32, 507.9,  0.300]])             # Hexane
+    CPT = np.array([[48.2, 305.5, 0.099],  # Ethane
+                    [42.0, 370.0, 0.153],  # Propane
+                    [37.5, 425.2, 0.199],  # Butane
+                    [33.75, 469.6, 0.254],  # Pentane
+                    [30.32, 507.9, 0.300]])  # Hexane
 
-    #--Task 1: Using the PR Equation
+    # --Task 1: Using the PR Equation
     # Equation 12
-    a=0.45724*R**2*CPT[:,1]**2/CPT[:,0]*(1+(0.37464+1.54226*CPT[:,2]-0.26992*CPT[:,2]**2)*(1-T/CPT[:,1]))**2
+    a = 0.45724 * R ** 2 * CPT[:, 1] ** 2 / CPT[:, 0] * (
+                1 + (0.37464 + 1.54226 * CPT[:, 2] - 0.26992 * CPT[:, 2] ** 2) * (1 - np.sqrt((T + 273.15) / CPT[:, 1]))) ** 2
     # Equation 13
-    b=0.07780*R*CPT[:, 1]/CPT[:,0]
+    b = 0.07780 * R * CPT[:, 1] / CPT[:, 0]
 
-    A=a*P/R**2/(T+273.15)**2
-    B=b*P/R/(T+273.15)
 
-    Aprod = np.outer(A,A)
+    A = a * P / R ** 2 / (T + 273.15) ** 2
+    B = b * P / R / (T + 273.15)
+
+    Aprod = np.outer(A, A)
     # Equation 26
-    Aij= (1-0.012) * Aprod ** 0.5
-    Am=np.dot(mf,np.dot(Aij,mf))
+    Aij = (1 - 0.012) * Aprod ** 0.5
+    Am = np.dot(mf, np.dot(Aij, mf))
     # Equation 25
-    Bm=np.dot(mf,B)
+    Bm = np.dot(mf, B)
+
+
 
     # Equation 14
-    poly=[1, (B - 1), (A - 2*B - 3*B**2), (B**3 + B**2 - A * B)]
-    Z=np.roots(poly)
-    if W==0:
-       Zm=min(Z)
+    poly = [1, (Bm - 1), (Am - 2 * Bm - 3 * Bm ** 2), (Bm ** 3 + Bm ** 2 - Am * Bm)]
+    Z = np.roots(poly)
+    if W == 0:
+        Zm = min(Z)
     else:
-       Zm=max(Z)
+        Zm = max(Z)
 
     # Equation 27
-    phi=np.exp(B/Bm*(Zm-1)-np.log(Zm-Bm)-
-        Am/2/np.sqrt(2)
+    phi = np.exp(B / Bm * (Zm - 1) - np.log(Zm - Bm) - Am / 2 / np.sqrt(2) /
+                 Bm * (2 * np.dot(mf, Aij)/Am - B/Bm)*np.log((Zm + (1 + np.sqrt(2)) * Bm)/(Zm + (1 - np.sqrt(2)) * Bm)))
 
-    return phi,Zm
+    return phi, Zm
 
 
 def ProcessEquations(m, P):
@@ -89,7 +91,7 @@ for i in range(Nn):
 
     mo = [0.3, 0.1, 0.2, 0.2, 0.2, 0.5, 0.3, 0.1, 0.05, 0.05, 0.5]  # Initial guessed values for unkowns
 
-    m = optimize.fsolve(ProcessEquations, mo, args=(P), xtol=1e-6)  # Solve the set of nonlinear equation.
+    m = optimize.fsolve(ProcessEquations, mo, args=(P,), xtol=1e-6)  # Solve the set of nonlinear equation.
     Results1[i, 0] = P
     Results1[i, 1:] = m
 

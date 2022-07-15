@@ -118,6 +118,7 @@ class Lab5:
         self.runtimes['1-BDF'] = time.perf_counter() - timer
 
 
+
     def task_1_plot_results(self):
         fig, axes = plt.subplots(3)
         axes[0].plot(self.td[2:-3], self.Rf1)
