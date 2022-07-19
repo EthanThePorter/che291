@@ -86,9 +86,12 @@ def VLE(Pressure):
         z = [0.5, 0.5]
 
         yb0 = i * 0.01
-        T0 = 131 - (131 - 75) / Nn * i  # Initial temperature guess for 350psi
-        # T0 = 121 - (121 - 50) / Nn * i  # Initial temperature guess for 350psi
-        # T0 = 110 - (110 - 33) / Nn * i  # Initial temperature guess for 350psi
+        if Pressure == 350:
+            T0 = 131 - (131 - 75) / Nn * i  # Initial temperature guess for 350psi
+        elif Pressure == 200:
+            T0 = 121 - (121 - 50) / Nn * i  # Initial temperature guess for 350psi
+        else:
+            T0 = 110 - (110 - 33) / Nn * i  # Initial temperature guess for 350psi
         alpha0 = i * 0.01
 
         # Initial Guess
